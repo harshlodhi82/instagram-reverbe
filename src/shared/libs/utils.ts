@@ -86,6 +86,13 @@ export class Utils {
     static mergeObjects<T1 extends object, T2 extends object>(oldObject: T1, newObject: T2): object {
         return lodash.merge(oldObject, newObject);
     }
+
+    static objectToSearchParams<T extends object>(obj: T): string {
+        const pairs = lodash.toPairs(obj);
+        const newObj = lodash.fromPairs(pairs);
+        const searchParams = new URLSearchParams(newObj)
+        return searchParams.toString();
+    }
 }
 
 

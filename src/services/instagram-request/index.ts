@@ -85,12 +85,14 @@ export class InstagramRequest {
 		//0 - prepare instagram cookies
 		const cookiesObject: { [key: string]: string } = await this.normalizeCookies();
 		const cookiesString: string = Utils.cookiesObjectToString(cookiesObject);
+		const csrfToken: string = cookiesObject['csrftoken'];
 
 		//1 - prepare default headers
 		const defaultHeaders: HeadersInit = {
 			'cookie'		: cookiesString,
 			'User-Agent'	: this.USER_AGENTS,
-			'x-ig-app-id'	: this.INSTAGRAM_APP_ID
+			'x-ig-app-id'	: this.INSTAGRAM_APP_ID,
+			'x-csrftoken'	: csrfToken
 		};
 
 		//2 - set default headers for body (return default header if header is not present)
