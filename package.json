@@ -26,6 +26,8 @@
   "homepage": "https://github.com/harshlodhi82/instagram-reverbe#readme",
   "devDependencies": {
     "@types/express": "^4.17.13",
+    "@types/lodash": "^4.14.192",
+    "@types/node-fetch": "^2.6.3",
     "nodemon": "^2.0.15",
     "rimraf": "^3.0.2",
     "ts-node": "^10.5.0",
@@ -33,6 +35,9 @@
   },
   "dependencies": {
     "dotenv": "^16.0.3",
-    "express": "^4.17.3"
+    "express": "^4.17.3",
+    "lodash": "^4.17.21",
+    "node-fetch": "^2.6.7",
+    "sqlite3": "^5.1.6"
   }
 }
