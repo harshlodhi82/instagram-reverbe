@@ -38,6 +38,7 @@
   "dependencies": {
     "dotenv": "^16.0.3",
     "express": "^4.17.3",
+    "extract-colors": "^3.0.0",
     "fluent-ffmpeg": "^2.1.2",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.7",

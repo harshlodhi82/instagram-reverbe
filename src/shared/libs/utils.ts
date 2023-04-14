@@ -93,6 +93,15 @@ export class Utils {
         const searchParams = new URLSearchParams(newObj)
         return searchParams.toString();
     }
+
+    static getColorBrightness(hexColor: string): number {
+        const hex = hexColor.replace('#', '');
+        const cr = parseInt(hex.substring(0, 2), 16) || 0;
+        const cg = parseInt(hex.substring(2, 2), 16) || 0;
+        const cb = parseInt(hex.substring(4, 2), 16) || 0;
+        const brightness = ((cr * 299) + (cg * 587) + (cb * 114)) / 1000;
+        return brightness;
+    }
 }
 
 

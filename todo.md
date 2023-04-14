@@ -1,4 +1,5 @@
-[*] intigrate reel upload service
+[*] integrate reel upload service
+[ ] create controllers to generate video
 [ ] create ffmpeg service which generate video and thumbnail
 [ ] create schedular 
 [ ] integrate all the things together
