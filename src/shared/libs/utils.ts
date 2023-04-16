@@ -1,3 +1,4 @@
+import fs from 'fs';
 import lodash from 'lodash';
 
 
@@ -48,40 +49,40 @@ export class Utils {
 
     static objectToQueryString<T extends object>(queryParameters: T): string {
 
-		//0 - was anything defined
-		if(Object.keys(queryParameters).length === 0) return '';
+        //0 - was anything defined
+        if (Object.keys(queryParameters).length === 0) return '';
 
-		//1 - construct the query string form the object parameters
-		return Object.entries(queryParameters).reduce(
-			(queryString: string, [key, val], index: number) => {
+        //1 - construct the query string form the object parameters
+        return Object.entries(queryParameters).reduce(
+            (queryString: string, [key, val], index: number) => {
 
-				//a. query starting symbol
-				const symbol: string = queryString.length === 0 ? '?' : '&';
+                //a. query starting symbol
+                const symbol: string = queryString.length === 0 ? '?' : '&';
 
-				//b. all element to query
-				queryString += val ? `${symbol}${key}=${val}` : '';
-				return queryString;
-			},
-			''
-		);
-	}
+                //b. all element to query
+                queryString += val ? `${symbol}${key}=${val}` : '';
+                return queryString;
+            },
+            ''
+        );
+    }
 
     static isStringJSON(jsonString: string): boolean {
-		try {
-			const jsonObj: any = JSON.parse(jsonString);
-			return true;
-		} catch (error: unknown) {
-			return false;
-		}
-	}
+        try {
+            const jsonObj: any = JSON.parse(jsonString);
+            return true;
+        } catch (error: unknown) {
+            return false;
+        }
+    }
 
     static objectKeysToLowercase<TInitial extends object>(obj: TInitial): object {
-		const preparedObj: object = {};
-		for (const key of Object.keys(obj)) {
-			(preparedObj as any)[key.toLowerCase().trim()] = (obj as any)[key];
-		}
-		return preparedObj;
-	}
+        const preparedObj: object = {};
+        for (const key of Object.keys(obj)) {
+            (preparedObj as any)[key.toLowerCase().trim()] = (obj as any)[key];
+        }
+        return preparedObj;
+    }
 
     static mergeObjects<T1 extends object, T2 extends object>(oldObject: T1, newObject: T2): object {
         return lodash.merge(oldObject, newObject);
@@ -101,6 +102,16 @@ export class Utils {
         const cb = parseInt(hex.substring(4, 2), 16) || 0;
         const brightness = ((cr * 299) + (cg * 587) + (cb * 114)) / 1000;
         return brightness;
+    }
+
+    static createFolder(folderPath: string) {
+        if (fs.existsSync(folderPath)) return;
+        fs.mkdirSync(folderPath);
+    }
+
+    static cleanFolder(folderPath: string) {
+        fs.rmdirSync(folderPath, { recursive: true });
+        this.createFolder(folderPath);
     }
 }
 

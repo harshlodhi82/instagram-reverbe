@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT auto</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+        }
+
+        #container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            /* background-color: red; */
+            justify-content: center;
+            align-items: center;
+        }
+
+        #container form {
+            /* background-color: grey; */
+            width: 500px;
+            padding: 20px;
+            box-shadow: 0 0 20px grey;
+            position: relative;
+        }
+
+        form input[type="text"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            border: none;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 2px solid black;
+        }
+
+        form input[type="submit"] {
+            border: none;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 2px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <form action="" method="post">
+            <input type="text" name="videoId" , placeholder="Video ID">
+            <br>
+            <input type="text" name="videoUrl" placeholder="Video URL">
+            <br>
+            <input type="text" name="videoTitle" placeholder="Video Title">
+            <br>
+            <input type="text" name="thumbnailTitle" placeholder="Thumbnail Title">
+            <br>
+            <textarea name="detailText" rows="3" placeholder="Enter Song Details" ></textarea>
+            <br>
+            <textarea name="keywords" rows="3" placeholder="',' Separated Keywords" ></textarea>
+            <br>
+            <textarea name="copyright" rows="4" placeholder="Enter Copyright Info" ></textarea>
+            <br>
+            <input type="text" name="bgImageKeyword" placeholder="Enter A Keyword For Background Image">
+            <br>
+            <input type="password" name="password" placeholder="Enter Password">
+            <br>
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+</body>
+
+</html>
