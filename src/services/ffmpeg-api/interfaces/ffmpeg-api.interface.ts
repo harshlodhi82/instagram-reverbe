@@ -31,10 +31,24 @@ export enum EnumCodecType {
 /**------------------------------------------------------
  * Interfaces
  */
-export interface IAudioContentInfo {
+export interface ICreateHdReverbAudioParams {
     audioPath: string;
     bitrate: EnumAudioBitrate;
-    metaData: IVideoMeta
+    metaData: IAudioMeta;
+}
+
+export interface IAudioMeta {
+    durationSec: number;
+    title: string;
+    artist: string;
+    publisher: string;
+}
+
+export interface IDownloadTrimmedAudioParams {
+    audioStreamUrl: string;
+    statTimeSec: number;
+    durationSec: number;
+    bitrate: EnumAudioBitrate;
 }
 
 export interface IContentInfo {

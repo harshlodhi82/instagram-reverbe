@@ -39,6 +39,14 @@ export class Utils {
         return seconds * 1000;
     }
 
+    static convertMsToSec(miliseconds: number): number {
+        return miliseconds / 1000;
+    }
+
+    static sampleRateToSec(sampleRate: number, defaultSampleRate: number): number {
+        return sampleRate / defaultSampleRate;
+    }
+
     static cookiesObjectToString(cookieObj: { [key: string]: string }): string {
         let stringValue = '';
         for (const key of Object.keys(cookieObj)) {

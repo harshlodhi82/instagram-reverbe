@@ -1,11 +1,10 @@
 import sharp from 'sharp';
 import ffmpeg, { FfprobeData } from 'fluent-ffmpeg';
-import { EnumVideoSize, IAudioContentInfo, IContentInfo, IImageInfo, IThumbnailEditorConfig, IVideoEditorConfig, IVideoSize, EnumCodecType } from './interfaces/ffmpeg-api.interface';
+import { EnumVideoSize, IContentInfo, IImageInfo, IThumbnailEditorConfig, IVideoEditorConfig, IVideoSize, EnumCodecType, IDownloadTrimmedAudioParams, ICreateHdReverbAudioParams } from './interfaces/ffmpeg-api.interface';
 
 
 class FfmpegApi {
 
-    private static readonly TMP_PATH: string = 'tmp';
     private static readonly REVERB_AUDIO_FILE: string = `assets/music/reverb/50_IR_White_Noise.wav`;
     private static readonly VIDEO_SIZE_CONFIG: Record<EnumVideoSize, IVideoSize> = {
         [EnumVideoSize.P360]: { width: 640, height: 360 },
@@ -280,26 +279,39 @@ class FfmpegApi {
     }
 
     //** Create HD audio */
-    static createHdAudio(audioInfo: IAudioContentInfo, progressHandler: (progress: any) => void): Promise<string> {
+    static createHdReverbAudio(params: ICreateHdReverbAudioParams, progressHandler: (progress: any) => void): Promise<string> {
         return new Promise((resolve, reject) => {
             const outputVideoFilePath = `tmp/${Date.now()}.mp3`;
+            const fadeDurationSec = 1;
 
             ffmpeg()
 
                 //add audio
-                .input(audioInfo.audioPath)
+                .input(params.audioPath)
 
                 //add reverb audio
                 .input(this.REVERB_AUDIO_FILE)
 
-                // enhance audio
+                //enhance audio
                 .audioCodec('libmp3lame')
-                .audioBitrate(audioInfo.bitrate)
+                .audioBitrate(params.bitrate)
 
                 //add complex filters
                 .complexFilter([
                     {
                         inputs: '[0]',
+                        filter: 'afade',
+                        options: { 'type': 'in', 'start_time': '0', 'duration': fadeDurationSec },
+                        outputs: '[fade_in]'
+                    },
+                    {
+                        inputs: '[fade_in]',
+                        filter: 'afade',
+                        options: { 'type': 'out', 'start_time': `${params.metaData.durationSec - fadeDurationSec}`, 'duration': fadeDurationSec },
+                        outputs: '[fade_out]'
+                    },
+                    {
+                        inputs: '[fade_out]',
                         filter: 'asetrate',
                         options: { 'r': '37485' },      // 37485 is the 85% of 44100 (original speed)
                         // options: { 'r': '36603' },   // 36603 is the 83% of 44100 (original speed)
@@ -313,6 +325,18 @@ class FfmpegApi {
                     },
                     {
                         inputs: '[0]',
+                        filter: 'afade',
+                        options: { 'type': 'in', 'start_time': '0', 'duration': fadeDurationSec },
+                        outputs: '[fade_in_two]'
+                    },
+                    {
+                        inputs: '[fade_in_two]',
+                        filter: 'afade',
+                        options: { 'type': 'out', 'start_time': `${params.metaData.durationSec - fadeDurationSec}`, 'duration': fadeDurationSec },
+                        outputs: '[fade_out_two]'
+                    },
+                    {
+                        inputs: '[fade_out_two]',
                         filter: 'asetrate',
                         options: { 'r': '37485' },      // 37485 is the 85% of 44100 (original speed)
                         // options: { 'r': '36603' },   // 36603 is the 83% of 44100 (original speed)
@@ -327,7 +351,7 @@ class FfmpegApi {
                     {
                         inputs: '[mixed]',
                         filter: 'volume',
-                        options: { 'volume': '0.8' },
+                        options: { 'volume': '0.9' },
                         outputs: '[low_volume]'
                     },
                     {
@@ -338,9 +362,9 @@ class FfmpegApi {
                 ])
 
                 //add output metadata
-                .outputOption('-metadata', `title=${audioInfo.metaData.title}`)
-                .outputOption('-metadata', `artist=${audioInfo.metaData.channelName}`)
-                .outputOption('-metadata', `publisher=${audioInfo.metaData.channelName}`)
+                .outputOption('-metadata', `title=${params.metaData.title}`)
+                .outputOption('-metadata', `artist=${params.metaData.artist}`)
+                .outputOption('-metadata', `publisher=${params.metaData.publisher}`)
 
                 //output audio file
                 .output(outputVideoFilePath)
@@ -348,6 +372,37 @@ class FfmpegApi {
                 //handlers
                 .on('error', (err) => { reject(err); })
                 .on('end', () => { resolve(outputVideoFilePath); })
+                .on('progress', progressHandler)
+
+                //run
+                .run();
+        });
+    }
+
+    //** Download and Trim Audio From stream url */
+    static downloadTrimmedAudio(params: IDownloadTrimmedAudioParams, progressHandler: (progress: any) => void): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const outputAudioFilePath = `tmp/${Date.now()}.mp3`;
+
+            ffmpeg()
+
+                //add audio
+                .input(params.audioStreamUrl)
+
+                //enhance audio
+                .audioCodec('libmp3lame')
+                .audioBitrate(params.bitrate)
+
+                //trim audio
+                .setStartTime(params.statTimeSec)
+                .setDuration(params.durationSec)
+
+                //output audio file
+                .output(outputAudioFilePath)
+
+                //handlers
+                .on('error', (err) => { reject(err); })
+                .on('end', () => { resolve(outputAudioFilePath); })
                 .on('progress', progressHandler)
 
                 //run
