@@ -1,34 +1,56 @@
 import sharp from 'sharp';
 import ffmpeg, { FfprobeData } from 'fluent-ffmpeg';
-import { EnumVideoSize, IContentInfo, IImageInfo, IThumbnailEditorConfig, IVideoEditorConfig, IVideoSize, EnumCodecType, IDownloadTrimmedAudioParams, ICreateHdReverbAudioParams } from './interfaces/ffmpeg-api.interface';
+import { EnumVideoSize, IThumbnailEditorConfig, IVideoEditorConfig, IResolution, EnumCodecType, IDownloadTrimmedAudioParams, ICreateHdReverbAudioParams, EnumThumbnailSize, ICreateThumbnailParams, ICreateReelParams, IAudioEditorConfig } from './interfaces/ffmpeg-api.interface';
+import { Utils } from '../../shared/libs';
 
 
 class FfmpegApi {
 
     private static readonly REVERB_AUDIO_FILE: string = `assets/music/reverb/50_IR_White_Noise.wav`;
-    private static readonly VIDEO_SIZE_CONFIG: Record<EnumVideoSize, IVideoSize> = {
-        [EnumVideoSize.P360]: { width: 640, height: 360 },
-        [EnumVideoSize.P720]: { width: 1280, height: 720 },
-        [EnumVideoSize.P1080]: { width: 1920, height: 1080 },
+    private static readonly VIDEO_SIZE_CONFIG: Record<EnumVideoSize, IResolution> = {
+        [EnumVideoSize.P360]: { width: 360, height: 640 },
+        [EnumVideoSize.P720]: { width: 720, height: 1280 },
+        [EnumVideoSize.P1080]: { width: 1080, height: 1920 },
+    }
+    private static readonly THUMBNAIL_SIZE_CONFIG: Record<EnumThumbnailSize, IResolution> = {
+        [EnumThumbnailSize.P360]: { width: 360, height: 360 },
+        [EnumThumbnailSize.P720]: { width: 720, height: 720 },
+        [EnumThumbnailSize.P1080]: { width: 1080, height: 1080 },
     }
     private static readonly VIDEO_EDITOR_CONFIG: IVideoEditorConfig = {
         fontFile: `assets/fonts/Staatliches-Regular.ttf`,
-        headingSize: 40,
-        headingYOffset: 250,
-        titleSize: 80,
-        titleYOffset: 125,
+        usernameSize: 35,
+        usernameYOffset: 1150,
+        headingText: 'Slowed + Reverb',
+        headingSize: 50,
+        headingYOffset: 800,
+        songTitleSize: 95,
+        songTitleYOffset: 650,
+        songTitleTextMaxLength: 20,
+        artistSize: 50,
+        artistYOffset: 520,
+        artistTextMaxLength: 30,
         vignetteYOffset: 75,
-        circleImgYOffset: 250,
+        circleImgYOffset: 1000,
+        audioWaveHeightOffset: 1000,
+        audioWavePositionOffset: 700,
     }
     private static readonly THUMBNAIL_EDITOR_CONFIG: IThumbnailEditorConfig = {
         fontFile: `assets/fonts/Staatliches-Regular.ttf`,
-        headingText: `Slow + Reverb`,
+        headingText: `Slowed + Reverb`,
         headingSize: 60,
         headingYOffset: 250,
         titleSize: 120,
         titleYOffset: 100,
         vignetteYOffset: 80,
         circleImgYOffset: 250,
+    }
+    private static readonly AUDIO_EDITOR_CONFIG: IAudioEditorConfig = {
+        fadeDurationSec: 1,
+        audioCodec: 'libmp3lame',
+        slowedAsetrate: 37485,      // 37485 is the 85% of 44100 (original speed)
+        // slowedAsetrate: 36603,   // 36603 is the 83% of 44100 (original speed)
+        volume: 0.9,
     }
 
 
@@ -57,19 +79,19 @@ class FfmpegApi {
     }
 
     //** Create HD thumbnail */
-    static createThumbnail(imageInfo: IImageInfo, progressHandler: (progress: any) => void): Promise<string> {
+    static createThumbnail(params: ICreateThumbnailParams, progressHandler: (progress: any) => void): Promise<string> {
         return new Promise((resolve, reject) => {
-            const outputVideoFilePath = `tmp/${Date.now()}.png`;
-            const imageSizeConfig = this.VIDEO_SIZE_CONFIG[imageInfo.imageSize];
-            const circleCenterX = (imageSizeConfig.width - imageInfo.circleSize) / 2;
-            const circleCenterY = (imageSizeConfig.height - imageInfo.circleSize - this.THUMBNAIL_EDITOR_CONFIG.circleImgYOffset) / 2;
+            const outputFilePath = `tmp/${Date.now()}.png`;
+            const imageSizeConfig = this.THUMBNAIL_SIZE_CONFIG[params.imageSize];
+            const circleCenterX = (imageSizeConfig.width - params.logoSize) / 2;
+            const circleCenterY = (imageSizeConfig.height - params.logoSize - this.THUMBNAIL_EDITOR_CONFIG.circleImgYOffset) / 2;
 
             ffmpeg()
 
-                //add audio
-                .input(imageInfo.imagePath)
+                //add image
+                .input(params.imagePath)
 
-                .input(imageInfo.circlePath)
+                .input(params.logoPath)
 
                 //add complex filters
                 .complexFilter([
@@ -94,7 +116,7 @@ class FfmpegApi {
                     {
                         inputs: '[1]',
                         filter: 'scale',
-                        options: { 'w': `${imageInfo.circleSize}`, 'h': `${imageInfo.circleSize}` },
+                        options: { 'w': `${params.logoSize}`, 'h': `${params.logoSize}` },
                         outputs: '[circle_scale]'
                     },
                     {
@@ -109,7 +131,7 @@ class FfmpegApi {
                         options: {
                             'fontfile': `${this.THUMBNAIL_EDITOR_CONFIG.fontFile}`,
                             'text': this.THUMBNAIL_EDITOR_CONFIG.headingText,
-                            'fontcolor': `${imageInfo.fontColor}`,
+                            'fontcolor': `${params.fontColor}`,
                             'fontsize': `${this.THUMBNAIL_EDITOR_CONFIG.headingSize}`,
                             'x': `(w-text_w)/2`,
                             'y': `(h-text_h-${this.THUMBNAIL_EDITOR_CONFIG.headingYOffset})`
@@ -121,8 +143,8 @@ class FfmpegApi {
                         filter: 'drawtext',
                         options: {
                             'fontfile': `${this.THUMBNAIL_EDITOR_CONFIG.fontFile}`,
-                            'text': imageInfo.imageTitle,
-                            'fontcolor': `${imageInfo.fontColor}`,
+                            'text': params.imageTitle,
+                            'fontcolor': `${params.fontColor}`,
                             'fontsize': `${this.THUMBNAIL_EDITOR_CONFIG.titleSize}`,
                             'x': `(w-text_w)/2`,
                             'y': `(h-text_h-${this.THUMBNAIL_EDITOR_CONFIG.titleYOffset})`
@@ -130,12 +152,12 @@ class FfmpegApi {
                     },
                 ])
 
-                //output video file
-                .output(outputVideoFilePath)
+                //output image file
+                .output(outputFilePath)
 
                 //handlers
                 .on('error', (err) => { reject(err); })
-                .on('end', () => { resolve(outputVideoFilePath); })
+                .on('end', () => { resolve(outputFilePath); })
                 .on('progress', progressHandler)
 
                 //run
@@ -144,34 +166,35 @@ class FfmpegApi {
     }
 
     //** Create video */
-    static createVideo(contentInfo: IContentInfo, progressHandler: (progress: any) => void): Promise<string> {
+    static createReel(params: ICreateReelParams, progressHandler: (progress: any) => void): Promise<string> {
         return new Promise((resolve, reject) => {
 
             // configs
             const outputVideoFilePath = `tmp/${Date.now()}.mp4`;
-            const videoSizeConfig = this.VIDEO_SIZE_CONFIG[contentInfo.videoSize];
-            const audioWavePosition = videoSizeConfig.height / 2;
-            const circleCenterX = (videoSizeConfig.width - contentInfo.circleSize) / 2;
-            const circleCenterY = (videoSizeConfig.height - contentInfo.circleSize - this.VIDEO_EDITOR_CONFIG.circleImgYOffset) / 2;
-
+            const videoSizeConfig = this.VIDEO_SIZE_CONFIG[params.videoSize];
+            const audioWaveHeight = videoSizeConfig.height + this.VIDEO_EDITOR_CONFIG.audioWaveHeightOffset;
+            const audioWavePosition = (videoSizeConfig.height / 2) - this.VIDEO_EDITOR_CONFIG.audioWavePositionOffset;
+            const circleCenterX = (videoSizeConfig.width - params.circleSize) / 2;
+            const circleCenterY = (videoSizeConfig.height - params.circleSize - this.VIDEO_EDITOR_CONFIG.circleImgYOffset) / 2;
+            
             ffmpeg()
 
                 //add image with loop till audio duration
-                .input(contentInfo.imagePath)
-                .loop(contentInfo.audioInfo.duration) // in Seconds
+                .input(params.imagePath)
+                .loop(params.durationSec) // in Seconds
 
-                .input(contentInfo.circlePath)
-                .loop(contentInfo.audioInfo.duration) // in Seconds
+                .input(params.circlePath)
+                .loop(params.durationSec) // in Seconds
 
                 //add audio
-                .input(contentInfo.audioPath)
+                .input(params.audioPath)
 
                 //add complex filters
                 .complexFilter([
-                    {
+                     {
                         inputs: '[0]',
                         filter: 'crop',
-                        options: { 'out_h': 'in_w/16*9' },
+                        options: { 'w': `${videoSizeConfig.width}`, 'h': `${videoSizeConfig.height}` },
                         outputs: '[bg_crop]'
                     },
                     {
@@ -189,13 +212,13 @@ class FfmpegApi {
                     {
                         inputs: '[1]',
                         filter: 'scale',
-                        options: { 'w': `${contentInfo.circleSize}`, 'h': `${contentInfo.circleSize}` },
+                        options: { 'w': `${params.circleSize}`, 'h': `${params.circleSize}` },
                         outputs: '[circle_scale]'
                     },
                     {
                         inputs: '[circle_scale]',
                         filter: 'rotate',
-                        options: { 'a': `${contentInfo.circleRotateSpeed}*PI*t/2`, 'c': `none` },
+                        options: { 'a': `${params.circleRotateSpeed}*PI*t/2`, 'c': `none` },
                         outputs: '[circle_rotate]'
                     },
                     {
@@ -209,8 +232,21 @@ class FfmpegApi {
                         filter: 'drawtext',
                         options: {
                             'fontfile': `${this.VIDEO_EDITOR_CONFIG.fontFile}`,
-                            'text': contentInfo.metaData.channelName,
-                            'fontcolor': `${contentInfo.fontColor}`,
+                            'text': `@${params.metaData.author}`,
+                            'fontcolor': `${params.fontColor}`,
+                            'fontsize': `${this.VIDEO_EDITOR_CONFIG.usernameSize}`,
+                            'x': `(w-text_w)/2`,
+                            'y': `(h-text_h-${this.VIDEO_EDITOR_CONFIG.usernameYOffset})`
+                        },
+                        outputs: '[final_img_with_username]'
+                    },
+                    {
+                        inputs: '[final_img_with_username]',
+                        filter: 'drawtext',
+                        options: {
+                            'fontfile': `${this.VIDEO_EDITOR_CONFIG.fontFile}`,
+                            'text': this.VIDEO_EDITOR_CONFIG.headingText,
+                            'fontcolor': `${params.fontColor}`,
                             'fontsize': `${this.VIDEO_EDITOR_CONFIG.headingSize}`,
                             'x': `(w-text_w)/2`,
                             'y': `(h-text_h-${this.VIDEO_EDITOR_CONFIG.headingYOffset})`
@@ -222,23 +258,36 @@ class FfmpegApi {
                         filter: 'drawtext',
                         options: {
                             'fontfile': `${this.VIDEO_EDITOR_CONFIG.fontFile}`,
-                            'text': contentInfo.metaData.thumbnailTitle,
-                            'fontcolor': `${contentInfo.fontColor}`,
-                            'fontsize': `${this.VIDEO_EDITOR_CONFIG.titleSize}`,
+                            'text': Utils.shortStringLength(params.metaData.title, this.VIDEO_EDITOR_CONFIG.songTitleTextMaxLength),
+                            'fontcolor': `${params.fontColor}`,
+                            'fontsize': `${this.VIDEO_EDITOR_CONFIG.songTitleSize}`,
                             'x': `(w-text_w)/2`,
-                            'y': `(h-text_h-${this.VIDEO_EDITOR_CONFIG.titleYOffset})`
+                            'y': `(h-text_h-${this.VIDEO_EDITOR_CONFIG.songTitleYOffset})`
                         },
-                        outputs: '[final_img_with_title]'
+                        outputs: '[final_img_with_song_title]'
+                    },
+                    {
+                        inputs: '[final_img_with_song_title]',
+                        filter: 'drawtext',
+                        options: {
+                            'fontfile': `${this.VIDEO_EDITOR_CONFIG.fontFile}`,
+                            'text': Utils.shortStringLength(`by ${params.metaData.artist}`, this.VIDEO_EDITOR_CONFIG.artistTextMaxLength),
+                            'fontcolor': `${params.fontColor}`,
+                            'fontsize': `${this.VIDEO_EDITOR_CONFIG.artistSize}`,
+                            'x': `(w-text_w)/2`,
+                            'y': `(h-text_h-${this.VIDEO_EDITOR_CONFIG.artistYOffset})`
+                        },
+                        outputs: '[final_img_with_song_artist]'
                     },
                     {
                         inputs: '[2]',
                         filter: 'showwaves',
                         options: {
-                            's': `${videoSizeConfig.width}x${videoSizeConfig.height}`,
+                            's': `${videoSizeConfig.width}x${audioWaveHeight}`,
                             'mode': `line`,
-                            'rate': `${contentInfo.videoFPS}`,
+                            'rate': `${params.videoFPS}`,
                             'draw': `full`,
-                            'colors': `${contentInfo.audioWaveColor}|${contentInfo.audioWaveColor}`
+                            'colors': `${params.audioWaveColor}|${params.audioWaveColor}`
                         },
                         outputs: '[audio_waves]'
                     },
@@ -249,21 +298,21 @@ class FfmpegApi {
                         outputs: '[opacity_audio_waves]'
                     },
                     {
-                        inputs: '[final_img_with_title][opacity_audio_waves]',
+                        inputs: '[final_img_with_song_artist][opacity_audio_waves]',
                         filter: 'overlay',
                         options: { 'x': '0', 'y': `${audioWavePosition}` },
                     },
                 ])
 
                 //set fps
-                .fps(contentInfo.videoFPS)
+                .fps(params.videoFPS)
 
                 // add output metadata
-                .outputOption('-metadata', `title=${contentInfo.metaData.title}`)
-                .outputOption('-metadata', `author=${contentInfo.metaData.channelName}`)
-                .outputOption('-metadata', `album_artist=${contentInfo.metaData.channelName}`)
-                .outputOption('-metadata', `track=${contentInfo.metaData.title}`)
-                .outputOption('-metadata', `description=${contentInfo.metaData.title}`)
+                .outputOption('-metadata', `title=${params.metaData.title}`)
+                .outputOption('-metadata', `author=${params.metaData.author}`)
+                .outputOption('-metadata', `album_artist=${params.metaData.artist}`)
+                .outputOption('-metadata', `track=${params.metaData.track}`)
+                .outputOption('-metadata', `description=${params.metaData.description}`)
 
                 //output video file
                 .output(outputVideoFilePath)
@@ -282,7 +331,6 @@ class FfmpegApi {
     static createHdReverbAudio(params: ICreateHdReverbAudioParams, progressHandler: (progress: any) => void): Promise<string> {
         return new Promise((resolve, reject) => {
             const outputVideoFilePath = `tmp/${Date.now()}.mp3`;
-            const fadeDurationSec = 1;
 
             ffmpeg()
 
@@ -293,7 +341,7 @@ class FfmpegApi {
                 .input(this.REVERB_AUDIO_FILE)
 
                 //enhance audio
-                .audioCodec('libmp3lame')
+                .audioCodec(this.AUDIO_EDITOR_CONFIG.audioCodec)
                 .audioBitrate(params.bitrate)
 
                 //add complex filters
@@ -301,20 +349,19 @@ class FfmpegApi {
                     {
                         inputs: '[0]',
                         filter: 'afade',
-                        options: { 'type': 'in', 'start_time': '0', 'duration': fadeDurationSec },
+                        options: { 'type': 'in', 'start_time': '0', 'duration': this.AUDIO_EDITOR_CONFIG.fadeDurationSec },
                         outputs: '[fade_in]'
                     },
                     {
                         inputs: '[fade_in]',
                         filter: 'afade',
-                        options: { 'type': 'out', 'start_time': `${params.metaData.durationSec - fadeDurationSec}`, 'duration': fadeDurationSec },
+                        options: { 'type': 'out', 'start_time': `${params.metaData.durationSec - this.AUDIO_EDITOR_CONFIG.fadeDurationSec}`, 'duration': this.AUDIO_EDITOR_CONFIG.fadeDurationSec },
                         outputs: '[fade_out]'
                     },
                     {
                         inputs: '[fade_out]',
                         filter: 'asetrate',
-                        options: { 'r': '37485' },      // 37485 is the 85% of 44100 (original speed)
-                        // options: { 'r': '36603' },   // 36603 is the 83% of 44100 (original speed)
+                        options: { 'r': `${this.AUDIO_EDITOR_CONFIG.slowedAsetrate}` },      // 37485 is the 85% of 44100 (original speed)
                         outputs: '[slowed]'
                     },
                     {
@@ -326,20 +373,19 @@ class FfmpegApi {
                     {
                         inputs: '[0]',
                         filter: 'afade',
-                        options: { 'type': 'in', 'start_time': '0', 'duration': fadeDurationSec },
+                        options: { 'type': 'in', 'start_time': '0', 'duration': this.AUDIO_EDITOR_CONFIG.fadeDurationSec },
                         outputs: '[fade_in_two]'
                     },
                     {
                         inputs: '[fade_in_two]',
                         filter: 'afade',
-                        options: { 'type': 'out', 'start_time': `${params.metaData.durationSec - fadeDurationSec}`, 'duration': fadeDurationSec },
+                        options: { 'type': 'out', 'start_time': `${params.metaData.durationSec - this.AUDIO_EDITOR_CONFIG.fadeDurationSec}`, 'duration': this.AUDIO_EDITOR_CONFIG.fadeDurationSec },
                         outputs: '[fade_out_two]'
                     },
                     {
                         inputs: '[fade_out_two]',
                         filter: 'asetrate',
-                        options: { 'r': '37485' },      // 37485 is the 85% of 44100 (original speed)
-                        // options: { 'r': '36603' },   // 36603 is the 83% of 44100 (original speed)
+                        options: { 'r': `${this.AUDIO_EDITOR_CONFIG.slowedAsetrate}` },      // 37485 is the 85% of 44100 (original speed)
                         outputs: '[slowed_two]'
                     },
                     {
@@ -351,7 +397,7 @@ class FfmpegApi {
                     {
                         inputs: '[mixed]',
                         filter: 'volume',
-                        options: { 'volume': '0.9' },
+                        options: { 'volume': `${this.AUDIO_EDITOR_CONFIG.volume}` },
                         outputs: '[low_volume]'
                     },
                     {

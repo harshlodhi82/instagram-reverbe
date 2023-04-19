@@ -11,9 +11,9 @@ class Unsplash {
     private static readonly SEARCH_API = "https://source.unsplash.com/random/[WIDTH]x[HEIGHT]/?[KEYWORD]";
     private static readonly LIGHT_BRIGHTNESS = 55;
     private static readonly IMAGE_SIZE_CONFIG: Record<EnumImageSize, IImageSize> = {
-        [EnumImageSize.P360]: { width: 640, height: 360 },
-        [EnumImageSize.P720]: { width: 1280, height: 720 },
-        [EnumImageSize.P1080]: { width: 1920, height: 1080 },
+        [EnumImageSize.P360]: { width: 360, height: 640 },
+        [EnumImageSize.P720]: { width: 720, height: 1280 },
+        [EnumImageSize.P1080]: { width: 1080, height: 1920 },
     }
     
 

@@ -10,6 +10,12 @@ export enum EnumVideoSize {
     P1080 = '1080p',
 }
 
+export enum EnumThumbnailSize {
+    P360 = '360p',
+    P720 = '720p',
+    P1080 = '1080p',
+}
+
 export enum EnumVideoFPS {
     FPS30 = 30,
     FPS60 = 60,
@@ -51,7 +57,7 @@ export interface IDownloadTrimmedAudioParams {
     bitrate: EnumAudioBitrate;
 }
 
-export interface IContentInfo {
+export interface ICreateReelParams {
     imagePath: string;
     audioPath: string;
     circlePath: string;
@@ -59,34 +65,51 @@ export interface IContentInfo {
     audioWaveColor: string;
     videoSize: EnumVideoSize,
     videoFPS: EnumVideoFPS,
-    audioInfo: FfprobeFormat,
+    durationSec: number,
     circleSize: number,
     circleRotateSpeed: number,
-    metaData: IVideoMeta
+    metaData: IReelMeta
 }
 
-export interface IImageInfo {
+export interface IReelMeta {
+    title: string;
+    author: string;
+    artist: string;
+    track: string;
+    description: string;
+}
+
+export interface ICreateThumbnailParams {
     imagePath: string;
     imageTitle: string;
     imageSize: EnumVideoSize,
-    circlePath: string;
-    circleSize: number,
+    logoPath: string;
+    logoSize: number,
     fontColor: string
 }
 
-export interface IVideoSize {
+export interface IResolution {
     width: number;
     height: number;
 }
 
 export interface IVideoEditorConfig {
     fontFile: string,
+    usernameSize: 35,
+    usernameYOffset: 1150,
+    headingText: string,
     headingSize: number,
     headingYOffset: number,
-    titleSize: number,
-    titleYOffset: number,
+    songTitleSize: number,
+    songTitleYOffset: number,
+    songTitleTextMaxLength: number,
+    artistSize: number,
+    artistYOffset: number,
+    artistTextMaxLength: number,
     vignetteYOffset: number,
     circleImgYOffset: number,
+    audioWaveHeightOffset: number,
+    audioWavePositionOffset: number,
 }
 
 export interface IThumbnailEditorConfig {
@@ -98,6 +121,13 @@ export interface IThumbnailEditorConfig {
     titleYOffset: number,
     vignetteYOffset: number,
     circleImgYOffset: number,
+}
+
+export interface IAudioEditorConfig {
+    fadeDurationSec: number,
+    audioCodec: string,
+    slowedAsetrate: number, 
+    volume: number,
 }
 
 export interface IVideoMeta {

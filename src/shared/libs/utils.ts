@@ -47,6 +47,18 @@ export class Utils {
         return sampleRate / defaultSampleRate;
     }
 
+    static shortStringLength(str: string, maxLength: number): string {
+        let finalString = '';
+        for (const char of str) {
+            finalString+=char;
+            if(finalString.length > maxLength) break;
+        }
+        if(str.length !== finalString.length){
+            finalString = `${finalString.trim()}...`;
+        }
+        return finalString;
+    }
+
     static cookiesObjectToString(cookieObj: { [key: string]: string }): string {
         let stringValue = '';
         for (const key of Object.keys(cookieObj)) {
