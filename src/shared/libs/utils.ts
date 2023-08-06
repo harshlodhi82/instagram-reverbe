@@ -50,10 +50,10 @@ export class Utils {
     static shortStringLength(str: string, maxLength: number): string {
         let finalString = '';
         for (const char of str) {
-            finalString+=char;
-            if(finalString.length > maxLength) break;
+            finalString += char;
+            if (finalString.length > maxLength) break;
         }
-        if(str.length !== finalString.length){
+        if (str.length !== finalString.length) {
             finalString = `${finalString.trim()}...`;
         }
         return finalString;
@@ -132,6 +132,13 @@ export class Utils {
     static cleanFolder(folderPath: string) {
         fs.rmdirSync(folderPath, { recursive: true });
         this.createFolder(folderPath);
+    }
+
+    static rgbToHex(r: number, g: number, b: number): string {
+        const hexR = r.toString(16).padStart(2, '0');
+        const hexG = g.toString(16).padStart(2, '0');
+        const hexB = b.toString(16).padStart(2, '0');
+        return `#${hexR}${hexG}${hexB}`;
     }
 }
 

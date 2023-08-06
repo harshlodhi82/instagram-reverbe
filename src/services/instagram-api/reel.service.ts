@@ -1,8 +1,8 @@
 import fs from 'fs';
 import uuid4 from "uuid4";
 import { Utils } from "../../shared/libs";
-import { EnumCodecType, FfmpegApi } from "../ffmpeg-api";
-import { InstagramRequest } from "../instagram-request";
+import { EnumCodecType, FfmpegApiService } from "../ffmpeg-api";
+import { InstagramRequestService } from "../instagram-request/instagram-request.service";
 import { UserService } from './user.service';
 import { IUserInfo } from './interfaces/user-info.interface';
 
@@ -35,7 +35,7 @@ export class ReelService {
         const userInfo: IUserInfo = UserService.getUserInfoFromCache();
 
         //1 - prepare video meta
-        const videoFileInfo = await FfmpegApi.getFfmpegInfo(videoPath);
+        const videoFileInfo = await FfmpegApiService.getFfmpegInfo(videoPath);
         const videoInfo = videoFileInfo.streams.find(elm => elm.codec_type === EnumCodecType.Video);
         const videoSize = videoFileInfo.format.size;
         const videoData = fs.readFileSync(videoPath);
@@ -71,7 +71,7 @@ export class ReelService {
 
         //4 - call the API
         const rUploadVideoApi = `https://i.instagram.com/rupload_igvideo/${uploadName}`;
-        const rUploadVideoRes = await InstagramRequest.post(rUploadVideoApi, videoData, { headers: rUploadVideoHeaders });
+        const rUploadVideoRes = await InstagramRequestService.post(rUploadVideoApi, videoData, { headers: rUploadVideoHeaders });
         const _rUploadVideoData = await rUploadVideoRes.json();
     }
 
@@ -80,7 +80,7 @@ export class ReelService {
 
         //0 - prepare image meta
         const imageWaterfallId = uuid4();
-        const imageFileInfo = await FfmpegApi.getFfmpegInfo(thumbnailPath);
+        const imageFileInfo = await FfmpegApiService.getFfmpegInfo(thumbnailPath);
         const imageInfo = imageFileInfo.streams.find(elm => elm.codec_type === EnumCodecType.Video);
         const imageSize = imageFileInfo.format.size;
         const imageData = fs.readFileSync(thumbnailPath);
@@ -110,7 +110,7 @@ export class ReelService {
 
         //3 - call the API
         const rUploadPhotoApi = `https://i.instagram.com/rupload_igphoto/${uploadName}`;
-        const rUploadPhotoRes = await InstagramRequest.post(rUploadPhotoApi, imageData, { headers: rUploadPhotoHeaders });
+        const rUploadPhotoRes = await InstagramRequestService.post(rUploadPhotoApi, imageData, { headers: rUploadPhotoHeaders });
         const _rUploadPhotoData = await rUploadPhotoRes.json();
     }
 
@@ -148,7 +148,7 @@ export class ReelService {
 
         //2 - call the API
         const configureClipApi = `https://i.instagram.com/api/v1/media/configure_to_clips/`;
-        const configureClipRes = await InstagramRequest.post(configureClipApi, searchParams, { headers: { 'content-type': 'application/x-www-form-urlencoded' } });
+        const configureClipRes = await InstagramRequestService.post(configureClipApi, searchParams, { headers: { 'content-type': 'application/x-www-form-urlencoded' } });
         const _configureClipData = await configureClipRes.json();
     }
 }

@@ -1,5 +1,5 @@
 import uuid4 from "uuid4";
-import { InstagramRequest } from "../instagram-request";
+import { InstagramRequestService } from "../instagram-request";
 import { ISearchMusicResponse } from "./interfaces/fbsearch.interface";
 
 
@@ -12,7 +12,7 @@ export class FbSearchService {
             "query": query,
             "browse_session_id": uuid4()
         }
-        const response = await InstagramRequest.get(API, { params: params });
+        const response = await InstagramRequestService.get(API, { params: params });
         const resData: ISearchMusicResponse = await response.json();
         return resData;
     }

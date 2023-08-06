@@ -1,5 +1,5 @@
 import { envConfigs } from "../../configs/env";
-import { InstagramRequest } from "../instagram-request";
+import { InstagramRequestService } from "../instagram-request/instagram-request.service";
 import { IUserInfo } from "./interfaces/user-info.interface";
 
 export class UserService {
@@ -16,7 +16,7 @@ export class UserService {
     static async  getUserInfo(): Promise<IUserInfo> {
         try {
             const api = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${this.username}`;
-            const response = await InstagramRequest.get(api);
+            const response = await InstagramRequestService.get(api);
             const data: IUserInfo = await response.json();
             this.userInfoDB.set('userInfo', data);
             return data;
