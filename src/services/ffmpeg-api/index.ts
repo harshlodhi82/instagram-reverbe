@@ -1,3 +1,3 @@
 export* from './ffmpeg-api.service';
-export { EnumCodecType } from './ffmpeg-api.interface';
+export { EnumCodecType, IFfmpegProgress } from './ffmpeg-api.interface';
 

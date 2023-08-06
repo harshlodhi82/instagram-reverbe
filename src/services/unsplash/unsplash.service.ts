@@ -50,20 +50,11 @@ export class UnsplashService {
             });
         });
 
-        //find the best colors
-        const bestColorCount: number = 2;
-        const bestColorsSet: Set<string> = new Set();
-        for (const color of colorsArray) {
-            const colorCount: number = colorsArray.filter((c) => c === color).length;
-            if (colorCount < bestColorCount) continue;
-            bestColorsSet.add(color);
-        }
-
-        return Array.from(bestColorsSet);
+        return colorsArray;
     }
 
     static getLightestColor(colors: string[]): string {
-        const colorsData = this.getColorsData(colors).sort((a, b) => {
+        const colorsData: IColorData[] = this.getColorsData(colors).sort((a, b) => {
             return (a.brightness > b.brightness) ? -1 : 1;
         });
         return colorsData[0].hex;
