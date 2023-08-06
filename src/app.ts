@@ -3,14 +3,16 @@ dotenv.config();
 
 import { envConfigs } from './configs/env';
 import express from 'express';
-import { InstagramApi } from './services/instagram-api';
+import { InstagramApiService } from './services/instagram-api';
+import { VideoGeneratorController } from './controllers/video-generator';
 
 
 const app = express();
 const port = envConfigs.PORT || 8080;
 const env = envConfigs.NODE_ENV || 'development';
 
-InstagramApi.test();
+// InstagramApiService.test();
+// VideoGeneratorController.generateVideo();
 
 
 //** listen to app */
