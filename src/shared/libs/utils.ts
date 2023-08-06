@@ -130,7 +130,7 @@ export class Utils {
     }
 
     static cleanFolder(folderPath: string) {
-        fs.rmdirSync(folderPath, { recursive: true });
+        fs.rmSync(folderPath, { recursive: true });
         this.createFolder(folderPath);
     }
 

@@ -11,6 +11,7 @@ import { CliProgressService } from '../../services/cli-progress';
 export class VideoGeneratorController {
     private static readonly USERNAME = envConfigs.USER_NAME;
     private static readonly CHANNEL_LOGO = `assets/images/logo.svg`;
+    private static readonly TEMP_FOLDER = `temp`;
     private static readonly AUDIO_DURATION = 45;
 
 
@@ -18,12 +19,16 @@ export class VideoGeneratorController {
 
         // prepare video data
         const videoInfo = {
-            query: 'Safar',
+            query: 'After hours',
             caption: 'This is test caption'
             // query: 'love aaj kal'
             // query: 'hari aur main narci'
             // query: 'saiyyan'
         }
+
+        // IMP: create temp folder or clean if already exist
+        Utils.createFolder(VideoGeneratorController.TEMP_FOLDER);
+        Utils.cleanFolder(VideoGeneratorController.TEMP_FOLDER);
 
         // IMP: call user info instagram API to update the cache 
         await UserService.getUserInfo();
@@ -48,6 +53,7 @@ export class VideoGeneratorController {
             const trimmedAudioBar = CliProgressService.createProgress("Creating Trim audio");
             CliProgressService.start(trimmedAudioBar, VideoGeneratorController.AUDIO_DURATION, 0);
             const audioPath: string = await FfmpegApiService.downloadTrimmedAudio({
+                outputPath: `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}.mp3`,
                 audioStreamUrl: audioStreamUrl,
                 bitrate: EnumAudioBitrate.Rate192,
                 durationSec: VideoGeneratorController.AUDIO_DURATION,
@@ -59,6 +65,7 @@ export class VideoGeneratorController {
             const reverbAudioBar = CliProgressService.createProgress("Creating Reverb audio");
             CliProgressService.start(reverbAudioBar, VideoGeneratorController.AUDIO_DURATION, 0);
             const reverbAudioPath: string = await FfmpegApiService.createHdReverbAudio({
+                outputPath: `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}.mp3`,
                 audioPath: audioPath,
                 bitrate: EnumAudioBitrate.Rate192,
                 metaData: {
@@ -74,6 +81,7 @@ export class VideoGeneratorController {
             const reelPaths: IReelPaths | null = await this.createVideo(reverbAudioPath, { title: audioItem.track.title, artist: audioItem.track.display_artist });
             if (reelPaths == null) {
                 console.log("Unable to create video");
+                Utils.cleanFolder(VideoGeneratorController.TEMP_FOLDER);
                 continue;
             }
             console.log("Video is created successfully!");
@@ -88,9 +96,11 @@ export class VideoGeneratorController {
 
             // clean tmp folder 
             console.log("Cleaning tmp folder...");
+            Utils.cleanFolder(VideoGeneratorController.TEMP_FOLDER);
 
             // wait for random 10-15 random minutes to continue
             console.log("Video process is completed successfully!");
+            await Utils.wait(10000);
         }
     }
 
@@ -109,7 +119,7 @@ export class VideoGeneratorController {
 
             // generate random image from unsplash
             const imageBuffer = await UnsplashService.getRandomWallpaper(wallpaperKeyword, EnumImageSize.P1080);
-            const wallpaperFilePath = `tmp/${Date.now()}.png`;
+            const wallpaperFilePath = `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}.png`;
             fs.writeFileSync(wallpaperFilePath, imageBuffer);
             CliProgressService.update(videoBar, 10);
 
@@ -121,6 +131,7 @@ export class VideoGeneratorController {
 
             // create thumbnails
             const thumbnailPath: string = await FfmpegApiService.createThumbnail({
+                outputPath: `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}.png`,
                 imagePath: wallpaperFilePath,
                 imageTitle: 'Hell Tets',
                 imageSize: EnumVideoSize.P1080,
@@ -134,6 +145,7 @@ export class VideoGeneratorController {
             const audioInfo = await FfmpegApiService.getFfmpegInfo(audioPath);
             CliProgressService.update(videoBar, 70);
             const videoPath: string = await FfmpegApiService.createReel({
+                outputPath: `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}.mp4`,
                 imagePath: wallpaperFilePath,
                 audioPath: audioPath,
                 circlePath: logoPngPath,
@@ -174,7 +186,7 @@ export class VideoGeneratorController {
 
     //** Generate Logo using background image colors */
     private static async generatePngLogo(imageColors: string[]): Promise<string> {
-        const logoSvgPath = `tmp/${Date.now()}.svg`;
+        const logoSvgPath = `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}.svg`;
         const svgString = fs.readFileSync(this.CHANNEL_LOGO, { encoding: 'utf-8' });
         const lightColor = UnsplashService.getLightestColor(imageColors);
         const darkColor = UnsplashService.getDarkestColor(imageColors);
@@ -182,7 +194,7 @@ export class VideoGeneratorController {
             .replace(/\[DARK_COLOR\]/g, darkColor)
             .replace(/\[LIGHT_COLOR\]/g, lightColor);
         fs.writeFileSync(logoSvgPath, preparedSvg);
-        const logoPngPath = await FfmpegApiService.convertSvgToPng(logoSvgPath);
+        const logoPngPath = await FfmpegApiService.convertSvgToPng(logoSvgPath, `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}_svg.png`);
         fs.unlinkSync(logoSvgPath);
         return logoPngPath;
     }

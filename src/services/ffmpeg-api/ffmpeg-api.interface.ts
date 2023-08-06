@@ -36,6 +36,7 @@ export enum EnumCodecType {
  * Interfaces
  */
 export interface ICreateHdReverbAudioParams {
+    outputPath: string;
     audioPath: string;
     bitrate: EnumAudioBitrate;
     metaData: IAudioMeta;
@@ -49,6 +50,7 @@ export interface IAudioMeta {
 }
 
 export interface IDownloadTrimmedAudioParams {
+    outputPath: string;
     audioStreamUrl: string;
     statTimeSec: number;
     durationSec: number;
@@ -56,6 +58,7 @@ export interface IDownloadTrimmedAudioParams {
 }
 
 export interface ICreateReelParams {
+    outputPath: string;
     imagePath: string;
     audioPath: string;
     circlePath: string;
@@ -78,6 +81,7 @@ export interface IReelMeta {
 }
 
 export interface ICreateThumbnailParams {
+    outputPath: string;
     imagePath: string;
     imageTitle: string;
     imageSize: EnumVideoSize,

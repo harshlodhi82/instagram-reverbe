@@ -67,11 +67,10 @@ export class FfmpegApiService {
     }
 
     //** Convert SVG to PNG */
-    static convertSvgToPng(svgPath: string): Promise<string> {
+    static convertSvgToPng(svgPath: string, outputPath: string): Promise<string> {
         return new Promise((resolve, reject) => {
-            const outputFilePath = `tmp/${Date.now()}_svg.png`;
-            sharp(svgPath).png().toFile(outputFilePath).then(function (info) {
-                resolve(outputFilePath);
+            sharp(svgPath).png().toFile(outputPath).then(function (info) {
+                resolve(outputPath);
             }).catch(function (error) {
                 reject(error);
             });
@@ -81,7 +80,6 @@ export class FfmpegApiService {
     //** Create HD thumbnail */
     static createThumbnail(params: ICreateThumbnailParams, progressHandler: (progress: any) => void): Promise<string> {
         return new Promise((resolve, reject) => {
-            const outputFilePath = `tmp/${Date.now()}.png`;
             const imageSizeConfig = this.THUMBNAIL_SIZE_CONFIG[params.imageSize];
             const circleCenterX = (imageSizeConfig.width - params.logoSize) / 2;
             const circleCenterY = (imageSizeConfig.height - params.logoSize - this.THUMBNAIL_EDITOR_CONFIG.circleImgYOffset) / 2;
@@ -153,11 +151,11 @@ export class FfmpegApiService {
                 ])
 
                 //output image file
-                .output(outputFilePath)
+                .output(params.outputPath)
 
                 //handlers
                 .on('error', (err) => { reject(err); })
-                .on('end', () => { resolve(outputFilePath); })
+                .on('end', () => { resolve(params.outputPath); })
                 .on('progress', progressHandler)
 
                 //run
@@ -170,7 +168,6 @@ export class FfmpegApiService {
         return new Promise((resolve, reject) => {
 
             // configs
-            const outputVideoFilePath = `tmp/${Date.now()}.mp4`;
             const videoSizeConfig = this.VIDEO_SIZE_CONFIG[params.videoSize];
             const audioWaveHeight = videoSizeConfig.height + this.VIDEO_EDITOR_CONFIG.audioWaveHeightOffset;
             const audioWavePosition = (videoSizeConfig.height / 2) - this.VIDEO_EDITOR_CONFIG.audioWavePositionOffset;
@@ -315,11 +312,11 @@ export class FfmpegApiService {
                 .outputOption('-metadata', `description=${params.metaData.description}`)
 
                 //output video file
-                .output(outputVideoFilePath)
+                .output(params.outputPath)
 
                 //handlers
                 .on('error', (err) => { reject(err); })
-                .on('end', () => { resolve(outputVideoFilePath); })
+                .on('end', () => { resolve(params.outputPath); })
                 .on('progress', progressHandler)
 
                 //run
@@ -330,7 +327,6 @@ export class FfmpegApiService {
     //** Create HD audio */
     static createHdReverbAudio(params: ICreateHdReverbAudioParams, progressHandler: (progress: any) => void): Promise<string> {
         return new Promise((resolve, reject) => {
-            const outputVideoFilePath = `tmp/${Date.now()}.mp3`;
 
             ffmpeg()
 
@@ -413,11 +409,11 @@ export class FfmpegApiService {
                 .outputOption('-metadata', `publisher=${params.metaData.publisher}`)
 
                 //output audio file
-                .output(outputVideoFilePath)
+                .output(params.outputPath)
 
                 //handlers
                 .on('error', (err) => { reject(err); })
-                .on('end', () => { resolve(outputVideoFilePath); })
+                .on('end', () => { resolve(params.outputPath); })
                 .on('progress', progressHandler)
 
                 //run
@@ -428,7 +424,6 @@ export class FfmpegApiService {
     //** Download and Trim Audio From stream url */
     static downloadTrimmedAudio(params: IDownloadTrimmedAudioParams, progressHandler: (progress: any) => void): Promise<string> {
         return new Promise((resolve, reject) => {
-            const outputAudioFilePath = `tmp/${Date.now()}.mp3`;
 
             ffmpeg()
 
@@ -444,11 +439,11 @@ export class FfmpegApiService {
                 .setDuration(params.durationSec)
 
                 //output audio file
-                .output(outputAudioFilePath)
+                .output(params.outputPath)
 
                 //handlers
                 .on('error', (err) => { reject(err); })
-                .on('end', () => { resolve(outputAudioFilePath); })
+                .on('end', () => { resolve(params.outputPath); })
                 .on('progress', progressHandler)
 
                 //run

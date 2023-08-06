@@ -14,8 +14,8 @@ export class InstagramApiService {
 
     static async test() {
         try {
-            const path = 'tmp/test.mp4'; //TODO
-            const pic_path = 'tmp/grogu.jpg'; //TODO
+            const path = 'tmp_test/test.mp4'; //TODO
+            const pic_path = 'tmp_test/grogu.jpg'; //TODO
 
             console.log('Start testing >>>>>>>>>>');
 
