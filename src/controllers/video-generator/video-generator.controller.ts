@@ -6,16 +6,23 @@ import { Utils } from '../../shared/libs';
 import { envConfigs } from '../../configs/env';
 import { EnumImageSize, UnsplashService } from '../../services/unsplash';
 import { CliProgressService } from '../../services/cli-progress';
+import { ControllerAbstract } from '../shared';
 
 
-export class VideoGeneratorController {
+export class VideoGeneratorController extends ControllerAbstract {
+    
     private static readonly USERNAME = envConfigs.USER_NAME;
     private static readonly CHANNEL_LOGO = `assets/images/logo.svg`;
     private static readonly TEMP_FOLDER = `temp`;
     private static readonly AUDIO_DURATION = 45;
 
 
-    static async generateVideo() {
+    async run(): Promise<void> {
+        await VideoGeneratorController.generateVideo();
+    }
+
+    
+    private static async generateVideo() {
 
         // prepare video data
         const videoInfo = {
