@@ -66,6 +66,7 @@ export class FfmpegApiService {
         });
     }
 
+    
     //** Convert SVG to PNG */
     static convertSvgToPng(svgPath: string, outputPath: string): Promise<string> {
         return new Promise((resolve, reject) => {
@@ -77,76 +78,23 @@ export class FfmpegApiService {
         });
     }
 
+
     //** Create HD thumbnail */
     static createThumbnail(params: ICreateThumbnailParams, progressHandler: (progress: any) => void): Promise<string> {
         return new Promise((resolve, reject) => {
             const imageSizeConfig = this.THUMBNAIL_SIZE_CONFIG[params.imageSize];
-            const circleCenterX = (imageSizeConfig.width - params.logoSize) / 2;
-            const circleCenterY = (imageSizeConfig.height - params.logoSize - this.THUMBNAIL_EDITOR_CONFIG.circleImgYOffset) / 2;
 
             ffmpeg()
 
                 //add image
-                .input(params.imagePath)
-
-                .input(params.logoPath)
+                .input(params.imageUrl)
 
                 //add complex filters
                 .complexFilter([
                     {
                         inputs: '[0]',
-                        filter: 'crop',
-                        options: { 'out_h': 'in_w/16*9' },
-                        outputs: '[img_crop]'
-                    },
-                    {
-                        inputs: '[img_crop]',
                         filter: 'scale',
                         options: { 'w': `${imageSizeConfig.width}`, 'h': `${imageSizeConfig.height}` },
-                        outputs: '[img_scale]'
-                    },
-                    {
-                        inputs: '[img_scale]',
-                        filter: 'vignette',
-                        options: { 'a': `PI/2.8`, 'x0': 'w/2', 'y0': `${this.THUMBNAIL_EDITOR_CONFIG.vignetteYOffset}` },
-                        outputs: '[img_vignette]'
-                    },
-                    {
-                        inputs: '[1]',
-                        filter: 'scale',
-                        options: { 'w': `${params.logoSize}`, 'h': `${params.logoSize}` },
-                        outputs: '[circle_scale]'
-                    },
-                    {
-                        inputs: '[img_vignette][circle_scale]',
-                        filter: 'overlay',
-                        options: { 'x': `${circleCenterX}`, 'y': `${circleCenterY}` },
-                        outputs: '[final_img]'
-                    },
-                    {
-                        inputs: '[final_img]',
-                        filter: 'drawtext',
-                        options: {
-                            'fontfile': `${this.THUMBNAIL_EDITOR_CONFIG.fontFile}`,
-                            'text': this.THUMBNAIL_EDITOR_CONFIG.headingText,
-                            'fontcolor': `${params.fontColor}`,
-                            'fontsize': `${this.THUMBNAIL_EDITOR_CONFIG.headingSize}`,
-                            'x': `(w-text_w)/2`,
-                            'y': `(h-text_h-${this.THUMBNAIL_EDITOR_CONFIG.headingYOffset})`
-                        },
-                        outputs: '[final_img_with_heading]'
-                    },
-                    {
-                        inputs: '[final_img_with_heading]',
-                        filter: 'drawtext',
-                        options: {
-                            'fontfile': `${this.THUMBNAIL_EDITOR_CONFIG.fontFile}`,
-                            'text': params.imageTitle,
-                            'fontcolor': `${params.fontColor}`,
-                            'fontsize': `${this.THUMBNAIL_EDITOR_CONFIG.titleSize}`,
-                            'x': `(w-text_w)/2`,
-                            'y': `(h-text_h-${this.THUMBNAIL_EDITOR_CONFIG.titleYOffset})`
-                        },
                     },
                 ])
 
@@ -162,6 +110,7 @@ export class FfmpegApiService {
                 .run();
         });
     }
+
 
     //** Create video */
     static createReel(params: ICreateReelParams, progressHandler: (progress: any) => void): Promise<string> {
@@ -324,6 +273,7 @@ export class FfmpegApiService {
         });
     }
 
+
     //** Create HD audio */
     static createHdReverbAudio(params: ICreateHdReverbAudioParams, progressHandler: (progress: any) => void): Promise<string> {
         return new Promise((resolve, reject) => {
@@ -420,6 +370,7 @@ export class FfmpegApiService {
                 .run();
         });
     }
+
 
     //** Download and Trim Audio From stream url */
     static downloadTrimmedAudio(params: IDownloadTrimmedAudioParams, progressHandler: (progress: any) => void): Promise<string> {

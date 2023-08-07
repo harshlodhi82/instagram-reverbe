@@ -82,12 +82,8 @@ export interface IReelMeta {
 
 export interface ICreateThumbnailParams {
     outputPath: string;
-    imagePath: string;
-    imageTitle: string;
+    imageUrl: string;
     imageSize: EnumVideoSize,
-    logoPath: string;
-    logoSize: number,
-    fontColor: string
 }
 
 export interface IResolution {

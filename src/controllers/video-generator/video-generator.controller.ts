@@ -85,7 +85,7 @@ export class VideoGeneratorController extends ControllerAbstract {
             CliProgressService.stop(reverbAudioBar, VideoGeneratorController.AUDIO_DURATION);
 
             // create video for the audio file
-            const reelPaths: IReelPaths | null = await this.createVideo(reverbAudioPath, { title: audioItem.track.title, artist: audioItem.track.display_artist });
+            const reelPaths: IReelPaths | null = await this.createVideo(reverbAudioPath, { title: audioItem.track.title, artist: audioItem.track.display_artist, thumbnailUrl: audioItem.track.cover_artwork_uri });
             if (reelPaths == null) {
                 console.log("Unable to create video");
                 Utils.cleanFolder(VideoGeneratorController.TEMP_FOLDER);
@@ -113,7 +113,7 @@ export class VideoGeneratorController extends ControllerAbstract {
 
 
     //** Create Video */
-    private static async createVideo(audioPath: string, songInfo: { title: string, artist: string }): Promise<IReelPaths | null> {
+    private static async createVideo(audioPath: string, songInfo: { title: string, artist: string, thumbnailUrl: string }): Promise<IReelPaths | null> {
         try {
 
             // create variables
@@ -139,12 +139,8 @@ export class VideoGeneratorController extends ControllerAbstract {
             // create thumbnails
             const thumbnailPath: string = await FfmpegApiService.createThumbnail({
                 outputPath: `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}.png`,
-                imagePath: wallpaperFilePath,
-                imageTitle: 'Hell Tets',
+                imageUrl: songInfo.thumbnailUrl,
                 imageSize: EnumVideoSize.P1080,
-                logoPath: logoPngPath,
-                logoSize: 300,
-                fontColor: UnsplashService.getLightestColor(wallpaperColors)
             }, () => { });
             CliProgressService.update(videoBar, 30);
 
