@@ -8,6 +8,7 @@ export const envConfigs = {
     DB_PASSWORD: process.env.DB_PASSWORD,
     DB_HOST: process.env.DB_HOST,
     DB_DATABASE: process.env.DB_DATABASE,
+    SAVE_SONG_PASSWORD: process.env.SAVE_SONG_PASSWORD,
 }
 
 Object.keys(envConfigs).forEach((elm: string)=>{

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YT auto</title>
+    <title>Reverb Studio</title>
     <style>
         * {
             box-sizing: border-box;
@@ -20,13 +20,16 @@
             /* background-color: red; */
             justify-content: center;
             align-items: center;
+            background-color: black;
         }
 
         #container form {
             /* background-color: grey; */
             width: 500px;
             padding: 20px;
-            box-shadow: 0 0 20px grey;
+            /* box-shadow: 0 0 20px #ababab; */
+            border: 6px solid #3d3d3d;
+            border-radius: 8px;
             position: relative;
         }
 
@@ -38,7 +41,9 @@
             padding: 10px;
             margin: 10px 0;
             border-radius: 5px;
-            border: 2px solid black;
+            border: 2px solid #3d3d3d;
+            background-color: #3d3d3d;
+            color: #ababab;
         }
 
         form input[type="submit"] {
@@ -49,33 +54,48 @@
             position: relative;
             left: 50%;
             transform: translateX(-50%);
-            border: 2px solid black;
+            border: 2px solid #3d3d3d;
+            background-color: #3d3d3d;
+            color: #ababab;
+        }
+
+        form input[type="submit"]:hover {
+            cursor: pointer;
+        }
+
+        form .heading {
+            text-align: center;
+            margin: 10px 0;
+            color: #ababab;
+        }
+
+        .lobo {
+            width: 200px;
+            margin: 50px;
+        }
+
+        .res-message {
+            color: #ababab;
+            text-align: center;
+            margin: 10px 0;
         }
     </style>
 </head>
 
 <body>
     <div id="container">
-        <form action="" method="post">
-            <input type="text" name="videoId" , placeholder="Video ID">
+
+        <img src="./logo.svg" class="lobo" alt="" srcset="">
+
+        <form action="/add-song" method="post" autocomplete="off">
+            <h3 class="heading">Add Song into the library</h3>
+            <input id="songSearchQuery" type="text" name="songSearchQuery" , placeholder="Enter song search query from Instagram">
             <br>
-            <input type="text" name="videoUrl" placeholder="Video URL">
-            <br>
-            <input type="text" name="videoTitle" placeholder="Video Title">
-            <br>
-            <input type="text" name="thumbnailTitle" placeholder="Thumbnail Title">
-            <br>
-            <textarea name="detailText" rows="3" placeholder="Enter Song Details" ></textarea>
-            <br>
-            <textarea name="keywords" rows="3" placeholder="',' Separated Keywords" ></textarea>
-            <br>
-            <textarea name="copyright" rows="4" placeholder="Enter Copyright Info" ></textarea>
-            <br>
-            <input type="text" name="bgImageKeyword" placeholder="Enter A Keyword For Background Image">
-            <br>
-            <input type="password" name="password" placeholder="Enter Password">
+            <input id="password" type="password" name="password" placeholder="Enter Password">
             <br>
             <input type="submit" value="Submit">
+
+            <p class="res-message"><%= message %></p>
         </form>
     </div>
 </body>

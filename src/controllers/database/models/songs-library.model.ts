@@ -6,6 +6,7 @@ const songsLibrarySchema: mongoose.Schema<ISongsLibrary> = new mongoose.Schema<I
     search: {
         type: String,
         required: true,
+        index: true
     },
     isPosted: {
         type: Boolean,

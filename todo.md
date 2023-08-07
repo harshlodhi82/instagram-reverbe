@@ -4,7 +4,8 @@
 [*] create schedular 
 [*] create thumbnail using photo of song
 [*] add database
-[ ] create a HTML page with express route and controller to add songs in database
+[*] create a HTML page with express route and controller to add songs in database
+[ ] use db info to create reel
 [ ] integrate all the things together
 [ ] add good keywords and caption
 [ ] add logs
