@@ -1,16 +1,18 @@
 import fs from 'fs';
+import mongoose from 'mongoose';
 import { UserService, FbSearchService, ReelService } from '../../services/instagram-api';
 import { FfmpegApiService } from '../../services/ffmpeg-api';
 import { EnumAudioBitrate, EnumVideoFPS, EnumVideoSize, IFfmpegProgress } from '../../services/ffmpeg-api/ffmpeg-api.interface';
-import { Utils } from '../../shared/libs';
+import { Utils, logs } from '../../shared/libs';
 import { envConfigs } from '../../configs/env';
 import { EnumImageSize, UnsplashService } from '../../services/unsplash';
 import { CliProgressService } from '../../services/cli-progress';
 import { ControllerAbstract } from '../shared';
+import { ISongsLibrary, SongsLibrary } from '../database';
 
 
 export class VideoGeneratorController extends ControllerAbstract {
-    
+
     private static readonly USERNAME = envConfigs.USER_NAME;
     private static readonly CHANNEL_LOGO = `assets/images/logo.svg`;
     private static readonly TEMP_FOLDER = `temp`;
@@ -21,93 +23,107 @@ export class VideoGeneratorController extends ControllerAbstract {
         await VideoGeneratorController.generateVideo();
     }
 
-    
+
     private static async generateVideo() {
 
-        // prepare video data
-        const videoInfo = {
-            query: 'After hours',
-            caption: 'This is test caption'
-            // query: 'love aaj kal'
-            // query: 'hari aur main narci'
-            // query: 'saiyyan'
-        }
+        try {
 
-        // IMP: create temp folder or clean if already exist
-        Utils.createFolder(VideoGeneratorController.TEMP_FOLDER);
-        Utils.cleanFolder(VideoGeneratorController.TEMP_FOLDER);
-
-        // IMP: call user info instagram API to update the cache 
-        await UserService.getUserInfo();
-
-        // search music on instagram
-        const searchedAudioData = await FbSearchService.searchMusic(videoInfo.query);
-
-        // verify music and it's time stamps if not valid than DO NOT CONTINUE!
-        if (searchedAudioData.items.length === 0 && searchedAudioData.items[0].track.highlight_start_times_in_ms.length === 0) {
-            throw new Error("No good formate found for the audio");
-        }
-
-        // loop over the time stamps 
-        const audioItem = searchedAudioData.items[0];
-        for (const highlightTimeMs of audioItem.track.highlight_start_times_in_ms) {
-
-            // get stream url
-            console.log("Video process is started!");
-            const audioStreamUrl = audioItem.track.progressive_download_url;
-
-            // create 30 sec audio
-            const trimmedAudioBar = CliProgressService.createProgress("Creating Trim audio");
-            CliProgressService.start(trimmedAudioBar, VideoGeneratorController.AUDIO_DURATION, 0);
-            const audioPath: string = await FfmpegApiService.downloadTrimmedAudio({
-                outputPath: `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}.mp3`,
-                audioStreamUrl: audioStreamUrl,
-                bitrate: EnumAudioBitrate.Rate192,
-                durationSec: VideoGeneratorController.AUDIO_DURATION,
-                statTimeSec: Utils.convertMsToSec(highlightTimeMs),
-            }, (progress: IFfmpegProgress) => { CliProgressService.update(trimmedAudioBar, VideoGeneratorController.getTrimmedSec(progress.timemark)); });
-            CliProgressService.stop(trimmedAudioBar, VideoGeneratorController.AUDIO_DURATION);
-
-            // create audio file  of 30 sec from the timestamp
-            const reverbAudioBar = CliProgressService.createProgress("Creating Reverb audio");
-            CliProgressService.start(reverbAudioBar, VideoGeneratorController.AUDIO_DURATION, 0);
-            const reverbAudioPath: string = await FfmpegApiService.createHdReverbAudio({
-                outputPath: `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}.mp3`,
-                audioPath: audioPath,
-                bitrate: EnumAudioBitrate.Rate192,
-                metaData: {
-                    title: audioItem.track.title,
-                    artist: audioItem.track.display_artist,
-                    publisher: this.USERNAME,
-                    durationSec: VideoGeneratorController.AUDIO_DURATION,
-                },
-            }, (progress) => { CliProgressService.update(reverbAudioBar, VideoGeneratorController.getTrimmedSec(progress.timemark)); });
-            CliProgressService.stop(reverbAudioBar, VideoGeneratorController.AUDIO_DURATION);
-
-            // create video for the audio file
-            const reelPaths: IReelPaths | null = await this.createVideo(reverbAudioPath, { title: audioItem.track.title, artist: audioItem.track.display_artist, thumbnailUrl: audioItem.track.cover_artwork_uri });
-            if (reelPaths == null) {
-                console.log("Unable to create video");
-                Utils.cleanFolder(VideoGeneratorController.TEMP_FOLDER);
-                continue;
-            }
-            console.log("Video is created successfully!");
-
-            // upload it in Instagram
-            const uploadReelBar = CliProgressService.createProgress("Uploading reel..");
-            const maxReelUploadProgress = 100;
-            CliProgressService.start(uploadReelBar, maxReelUploadProgress, 0);
-            await ReelService.uploadReel(reelPaths.videoPath, reelPaths.thumbnailPath, videoInfo.caption)
-            CliProgressService.stop(uploadReelBar, maxReelUploadProgress);
-            console.log("Reel is uploaded successfully!");
-
-            // clean tmp folder 
-            console.log("Cleaning tmp folder...");
+            // IMP: create temp folder or clean if already exist
+            Utils.createFolder(VideoGeneratorController.TEMP_FOLDER);
             Utils.cleanFolder(VideoGeneratorController.TEMP_FOLDER);
 
-            // wait for random 10-15 random minutes to continue
-            console.log("Video process is completed successfully!");
-            await Utils.wait(10000);
+            // IMP: call user info instagram API to update the cache 
+            await UserService.getUserInfo();
+
+            // get random song from DB which is not posted yet
+            const songInfo: ISongsLibrary = await this.getRandomSong();
+
+            // prepare video meta information
+            const videoMetaInformation: IVideoMetaInformation = {
+                songQuery: songInfo.search,
+                caption: 'This is test caption'
+                // query: 'love aaj kal'
+                // query: 'hari aur main narci'
+                // query: 'saiyyan'
+            }
+
+            // search music on instagram
+            const searchedAudioData = await FbSearchService.searchMusic(videoMetaInformation.songQuery);
+
+            // verify music and it's time stamps if not valid than DO NOT CONTINUE!
+            if (searchedAudioData.items.length === 0 && searchedAudioData.items[0].track.highlight_start_times_in_ms.length === 0) {
+                throw new Error("No good formate found for the audio");
+            }
+
+            // loop over the time stamps 
+            const audioItem = searchedAudioData.items[0];
+            for (const highlightTimeMs of audioItem.track.highlight_start_times_in_ms) {
+
+                // get stream url
+                console.log("Video process is started!");
+                const audioStreamUrl = audioItem.track.progressive_download_url;
+
+                // create 30 sec audio
+                const trimmedAudioBar = CliProgressService.createProgress("Creating Trim audio");
+                CliProgressService.start(trimmedAudioBar, VideoGeneratorController.AUDIO_DURATION, 0);
+                const audioPath: string = await FfmpegApiService.downloadTrimmedAudio({
+                    outputPath: `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}.mp3`,
+                    audioStreamUrl: audioStreamUrl,
+                    bitrate: EnumAudioBitrate.Rate192,
+                    durationSec: VideoGeneratorController.AUDIO_DURATION,
+                    statTimeSec: Utils.convertMsToSec(highlightTimeMs),
+                }, (progress: IFfmpegProgress) => { CliProgressService.update(trimmedAudioBar, VideoGeneratorController.getTrimmedSec(progress.timemark)); });
+                CliProgressService.stop(trimmedAudioBar, VideoGeneratorController.AUDIO_DURATION);
+
+                // create audio file  of 30 sec from the timestamp
+                const reverbAudioBar = CliProgressService.createProgress("Creating Reverb audio");
+                CliProgressService.start(reverbAudioBar, VideoGeneratorController.AUDIO_DURATION, 0);
+                const reverbAudioPath: string = await FfmpegApiService.createHdReverbAudio({
+                    outputPath: `${VideoGeneratorController.TEMP_FOLDER}/${Date.now()}.mp3`,
+                    audioPath: audioPath,
+                    bitrate: EnumAudioBitrate.Rate192,
+                    metaData: {
+                        title: audioItem.track.title,
+                        artist: audioItem.track.display_artist,
+                        publisher: this.USERNAME,
+                        durationSec: VideoGeneratorController.AUDIO_DURATION,
+                    },
+                }, (progress) => { CliProgressService.update(reverbAudioBar, VideoGeneratorController.getTrimmedSec(progress.timemark)); });
+                CliProgressService.stop(reverbAudioBar, VideoGeneratorController.AUDIO_DURATION);
+
+                // create video for the audio file
+                const reelPaths: IReelPaths | null = await this.createVideo(reverbAudioPath, { title: audioItem.track.title, artist: audioItem.track.display_artist, thumbnailUrl: audioItem.track.cover_artwork_uri });
+                if (reelPaths == null) {
+                    console.log("Unable to create video");
+                    Utils.cleanFolder(VideoGeneratorController.TEMP_FOLDER);
+                    continue;
+                }
+                console.log("Video is created successfully!");
+
+                // upload it in Instagram
+                const uploadReelBar = CliProgressService.createProgress("Uploading reel..");
+                const maxReelUploadProgress = 100;
+                CliProgressService.start(uploadReelBar, maxReelUploadProgress, 0);
+                await ReelService.uploadReel(reelPaths.videoPath, reelPaths.thumbnailPath, videoMetaInformation.caption)
+                CliProgressService.stop(uploadReelBar, maxReelUploadProgress);
+                console.log("Reel is uploaded successfully!");
+
+                // clean tmp folder 
+                console.log("Cleaning tmp folder...");
+                Utils.cleanFolder(VideoGeneratorController.TEMP_FOLDER);
+
+                // wait for random 10-15 random minutes to continue
+                console.log("Video process is completed successfully!");
+                await Utils.wait(10000);
+            }
+
+            // update song as posted in database
+            const isSongUpdated = await this.updateSongAsPosted(songInfo._id);
+            if (!isSongUpdated) throw new Error(`Unable to update song "${songInfo.search}"("${songInfo._id}") as posted`);
+
+            logs.save(`✔\t Song uploaded as reel successfully, Song query "${songInfo.search}", Song ID "${songInfo._id}"`, true);
+        } catch (error) {
+            logs.save(`❌\t ${error?.message || error?.toString() || 'unknown error'}`, true);
         }
     }
 
@@ -205,6 +221,27 @@ export class VideoGeneratorController extends ControllerAbstract {
     private static getTrimmedSec(timemark: string): number {
         return parseInt(timemark.split(':')[2]);
     }
+
+    private static async getRandomSong(): Promise<ISongsLibrary> {
+        const foundSongs: ISongsLibrary[] = await SongsLibrary.aggregate([
+            { $match: { isPosted: false } },
+            { $sample: { size: 1 } }
+        ]);
+
+        if (foundSongs.length === 0) throw new Error("No song available, Please add some songs into the Database.");
+        return foundSongs[0];
+    }
+
+    private static async updateSongAsPosted(id: string): Promise<boolean> {
+        const updateResponse = await SongsLibrary.updateOne({ _id: new mongoose.Types.ObjectId(id) }, { $set: { isPosted: true } });
+        return updateResponse.acknowledged;
+    }
+}
+
+
+interface IVideoMetaInformation {
+    songQuery: string;
+    caption: string;
 }
 
 interface IReelPaths {

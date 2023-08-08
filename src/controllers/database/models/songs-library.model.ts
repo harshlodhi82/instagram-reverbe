@@ -19,6 +19,7 @@ const songsLibrarySchema: mongoose.Schema<ISongsLibrary> = new mongoose.Schema<I
 export const SongsLibrary: mongoose.Model<ISongsLibrary> = mongoose.model<ISongsLibrary>(collectionName, songsLibrarySchema);
 
 export interface ISongsLibrary {
+    _id: string;
     search: string;
     isPosted: boolean;
 }
