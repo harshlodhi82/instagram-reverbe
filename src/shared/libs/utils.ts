@@ -8,15 +8,15 @@ export class Utils {
         return new Promise((resolve) => { setTimeout(() => { resolve() }, time) })
     }
 
-    static getUniqueArrayValues = (arr: any[]): any[] => {
+    static getUniqueArrayValues(arr: any[]): any[] {
         return Array.from(new Set(arr));
     }
 
-    static shuffle = (arr: any[]): any[] => {
+    static shuffle<T>(arr: T[]): T[] {
         return lodash.shuffle(arr);
     }
 
-    static getRandomNumber = (min: number, max: number): number => {
+    static getRandomNumber(min: number, max: number): number {
         return Math.floor(Math.random() * (max - min) + min);
     }
 
@@ -25,10 +25,19 @@ export class Utils {
         return days[date.getDay()];
     }
 
-    static getRandomEnumValue = <T>(enumDef: T): string => {
+    static getRandomEnumValue<T>(enumDef: T): string {
         const values = Object.values(enumDef);
         const ranNumber = this.getRandomNumber(0, values.length);
         return values[ranNumber];
+    }
+
+    static getRandomArrayValue<T>(myArray: T[]): T {
+        const ranNumber = this.getRandomNumber(0, myArray.length);
+        return myArray[ranNumber];
+    }
+
+    static getRandomArrayValues<T>(myArray: T[], amount: number): T[] {
+        return this.shuffle(myArray).slice(0, amount);
     }
 
     static arrayToMap<T>(arr: T[]): Map<T, number> {

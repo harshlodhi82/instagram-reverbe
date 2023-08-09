@@ -6,7 +6,8 @@
 [*] add database
 [*] create a HTML page with express route and controller to add songs in database
 [*] use db info to create reel
-[ ] add good keywords and caption
+[*] add good keywords and caption
+[ ] add random timeout between posts
 [ ] integrate all the things together
 [ ] add audio metadata like artist and other good info
 [ ] add logs

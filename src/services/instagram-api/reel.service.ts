@@ -5,12 +5,13 @@ import { EnumCodecType, FfmpegApiService } from "../ffmpeg-api";
 import { InstagramRequestService } from "../instagram-request/instagram-request.service";
 import { UserService } from './user.service';
 import { IUserInfo } from './interfaces/user-info.interface';
+import { IReelConfigureResponse } from './interfaces/reel.interface';
 
 
 export class ReelService {
 
     //** Upload reel */
-    static async uploadReel(videoPath: string, thumbnailPath: string, caption: string) {
+    static async uploadReel(videoPath: string, thumbnailPath: string, caption: string): Promise<string> {
 
         //0 - basic configurations
         const uploadId: string = `${Date.now()}`;
@@ -25,7 +26,10 @@ export class ReelService {
         await Utils.wait(5000);
 
         //3 - configure reel
-        await this.configureReel(caption, uploadId);
+        const reelConfigureResponse: IReelConfigureResponse = await this.configureReel(caption, uploadId);
+
+        //4 - return reel ID
+        return reelConfigureResponse.media.pk;
     }
 
     //** Upload video */
@@ -115,8 +119,8 @@ export class ReelService {
     }
 
     //** Configure reel */
-    private static async configureReel(caption: string, uploadId: string){
-        
+    private static async configureReel(caption: string, uploadId: string): Promise<IReelConfigureResponse> {
+
         //0 - prepare body
         const configureClipBody = {
             source_type: 'library',
@@ -149,6 +153,7 @@ export class ReelService {
         //2 - call the API
         const configureClipApi = `https://i.instagram.com/api/v1/media/configure_to_clips/`;
         const configureClipRes = await InstagramRequestService.post(configureClipApi, searchParams, { headers: { 'content-type': 'application/x-www-form-urlencoded' } });
-        const _configureClipData = await configureClipRes.json();
+        const configureClipData: IReelConfigureResponse = await configureClipRes.json();
+        return configureClipData;
     }
 }

@@ -190,3 +190,16 @@ interface PageInfo9 {
     has_next_page: boolean
     end_cursor: any
 }
+
+export interface IPosCommentResponse {
+    id: string;
+    text: string;
+    created_time: number;
+    status: string;
+    from: {
+        id: string;
+        username: string;
+        full_name: string;
+        profile_picture: string;
+    }
+}

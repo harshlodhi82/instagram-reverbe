@@ -9,6 +9,7 @@ import { EnumImageSize, UnsplashService } from '../../services/unsplash';
 import { CliProgressService } from '../../services/cli-progress';
 import { ControllerAbstract } from '../shared';
 import { ISongsLibrary, SongsLibrary } from '../database';
+import { ReelMetaService } from '../../services/reel-meta';
 
 
 export class VideoGeneratorController extends ControllerAbstract {
@@ -41,7 +42,8 @@ export class VideoGeneratorController extends ControllerAbstract {
             // prepare video meta information
             const videoMetaInformation: IVideoMetaInformation = {
                 songQuery: songInfo.search,
-                caption: 'This is test caption'
+                description: ReelMetaService.getDescription(),
+                hashtags: ReelMetaService.getHashtags(),
                 // query: 'love aaj kal'
                 // query: 'hari aur main narci'
                 // query: 'saiyyan'
@@ -104,10 +106,18 @@ export class VideoGeneratorController extends ControllerAbstract {
                 const uploadReelBar = CliProgressService.createProgress("Uploading reel..");
                 const maxReelUploadProgress = 100;
                 CliProgressService.start(uploadReelBar, maxReelUploadProgress, 0);
-                await ReelService.uploadReel(reelPaths.videoPath, reelPaths.thumbnailPath, videoMetaInformation.caption)
+                const reelId: string = await ReelService.uploadReel(reelPaths.videoPath, reelPaths.thumbnailPath, videoMetaInformation.description)
                 CliProgressService.stop(uploadReelBar, maxReelUploadProgress);
                 console.log("Reel is uploaded successfully!");
 
+                // comment hashtags in the reel 
+                const postCommentBar = CliProgressService.createProgress("Posting hashtags in comment..");
+                const maxPostCommentBarProgress = 100;
+                CliProgressService.start(postCommentBar, maxPostCommentBarProgress, 0);
+                await UserService.postComment(reelId, videoMetaInformation.hashtags);
+                CliProgressService.stop(postCommentBar, maxPostCommentBarProgress);
+                console.log("Comment is posted successfully!");
+                
                 // clean tmp folder 
                 console.log("Cleaning tmp folder...");
                 Utils.cleanFolder(VideoGeneratorController.TEMP_FOLDER);
@@ -241,7 +251,8 @@ export class VideoGeneratorController extends ControllerAbstract {
 
 interface IVideoMetaInformation {
     songQuery: string;
-    caption: string;
+    description: string;
+    hashtags: string;
 }
 
 interface IReelPaths {
